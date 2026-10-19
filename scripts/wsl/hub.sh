@@ -9,10 +9,14 @@ home=${BACKPLANE_HOME:-$HOME/.backplane-bend}
 port=${BACKPLANE_PORT:-3787}
 url="http://127.0.0.1:$port/"
 
+# hub.lock outlives the hub, and WSL reuses pids after every boot.
 hub_pid() {
   local pid
   pid=$(cut -d' ' -f1 "$home/hub.lock" 2>/dev/null) || return 1
-  [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null && echo "$pid"
+  [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null || return 1
+  local exe
+  exe=$(readlink "/proc/$pid/exe" 2>/dev/null) || return 1
+  [ "${exe% (deleted)}" = "$(readlink -f "$bin")" ] && echo "$pid"
 }
 
 answers() { curl -s -m 2 -o /dev/null "http://127.0.0.1:$port/hello"; }
