@@ -12074,6 +12074,33 @@ def Laws.onehub_held():
 def Laws.onehub_says():
   {==}
 
+def Laws.gate_own_page():
+  {==}
+
+def Laws.gate_localhost_page():
+  {==}
+
+def Laws.gate_native_client():
+  {==}
+
+def Laws.gate_foreign_origin_refused():
+  {==}
+
+def Laws.gate_other_port_refused():
+  {==}
+
+def Laws.gate_null_origin_refused():
+  {==}
+
+def Laws.gate_rebound_host_refused():
+  {==}
+
+def Laws.gate_rebound_page_refused():
+  {==}
+
+def Laws.gate_name_prefix_refused():
+  {==}
+
 def Laws.standin_path_first():
   {==}
 

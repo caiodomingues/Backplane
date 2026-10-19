@@ -159,6 +159,7 @@ import ./src/mobile/bots.bend as MBT
 import ./src/core/cli.bend as CLI # one-hub
 import ./src/core/onehub.bend as OHB # one-hub
 import ./src/core/standin.bend as SIN # one-hub
+import ./src/core/gate.bend as GTE # loopback gate
 
 # Backplane's rules, stated over the real code. `bend PROOF.bend` proves each
 # one. Humans own this file: an agent may add laws, never weaken or delete
@@ -10395,6 +10396,36 @@ law onehub_held:
 
 law onehub_says:
   {OHB.OneHub.says("/h", "12", "3799") == "a hub already serves /h (pid 12, port 3799)" : String}
+
+# The loopback gate (core/gate.bend): the hub's own pages and native
+# clients pass; another site's page (a WebSocket to 127.0.0.1, or a DNS name
+# rebound to it) needs the pairing token
+law gate_own_page:
+  {GTE.Gate.local("127.0.0.1:3787", "http://127.0.0.1:3787") == True{} : Bool}
+
+law gate_localhost_page:
+  {GTE.Gate.local("localhost:3787", "http://localhost:3787") == True{} : Bool}
+
+law gate_native_client:
+  {GTE.Gate.local("127.0.0.1:3787", "") == True{} : Bool}
+
+law gate_foreign_origin_refused:
+  {GTE.Gate.local("127.0.0.1:3787", "https://evil.example") == False{} : Bool}
+
+law gate_other_port_refused:
+  {GTE.Gate.local("127.0.0.1:3787", "http://127.0.0.1:5173") == False{} : Bool}
+
+law gate_null_origin_refused:
+  {GTE.Gate.local("127.0.0.1:3787", "null") == False{} : Bool}
+
+law gate_rebound_host_refused:
+  {GTE.Gate.local("evil.example:3787", "") == False{} : Bool}
+
+law gate_rebound_page_refused:
+  {GTE.Gate.local("evil.example:3787", "http://evil.example:3787") == False{} : Bool}
+
+law gate_name_prefix_refused:
+  {GTE.Gate.local("localhost.evil.example:3787", "") == False{} : Bool}
 
 # Stand-ins (core/standin.bend) stay ahead of the login shell's PATH and
 # ~/.local/bin, where the real CLIs are
