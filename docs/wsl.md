@@ -6,8 +6,7 @@ in `scripts/wsl/`.
 
 ## Setup
 
-The build lives in a clone inside WSL, `/root/src/Backplane`, not on `/mnt/*`
-(builds there are slow). Bend 2.0.36 and clang 19 are set up by
+The build lives in a clone inside WSL, `/root/src/Backplane`. Bend 2.0.36 and clang 19 are set up by
 `/root/bp-tools/env.sh`:
 
 ```sh
@@ -15,7 +14,7 @@ The build lives in a clone inside WSL, `/root/src/Backplane`, not on `/mnt/*`
 cd /root/src/Backplane && scripts/build.sh   # dist/backplane-serve + dist/web
 ```
 
-The agents' CLIs (Claude Code and the others) are installed and signed in
+Agent CLIs (Claude Code at `~/.local/bin/claude`) are installed and signed in
 inside WSL, as on any Linux machine.
 
 ## Running it
