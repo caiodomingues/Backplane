@@ -1795,8 +1795,6 @@ def Hub.inbox(h: Hub, k: Chan(Msg) -> Hub -> IO(Unit)) -> IO(Unit):
 
 def Codex.sandbox(r: M.RuntimeMode) -> List<&2, String>:
   match r:
-    case M.FullAccess{}:
-      ["--dangerously-bypass-approvals-and-sandbox"]
     case M.Supervised{}:
       ["-s", "read-only"]
     case _:
@@ -2664,32 +2662,15 @@ def Grok.perm(r: M.RuntimeMode) -> List<&2, String>:
       ["--permission-mode", "acceptEdits", "agent"]
     case M.AutoMode{}:
       ["--permission-mode", "auto", "agent"]
-    case M.FullAccess{}:
-      ["agent", "--always-approve"]
 
 def Grok.args(r: M.RuntimeMode, +model: String, +effort: String) -> List<&2, String>:
   List.concat(&2, String, [Grok.perm(r), Codex.opt("-m", model), AG.Effort.args("grok", effort), ["stdio"]])
 
-# whether Grok's tool requests go to the user (all modes but full access)
-def Grok.asks(r: M.RuntimeMode) -> Bool:
-  match r:
-    case M.FullAccess{}:
-      False{}
-    case _:
-      True{}
-
 # Muse: `muse serve` with the thread's model; the workspace's own rules and
-# skills load (as Codex and Grok read AGENTS.md); full access also drops
-# Muse's shell sandbox. The approval mode goes over the wire (Muse.mode).
-def Muse.free(r: M.RuntimeMode) -> List<&2, String>:
-  match r:
-    case M.FullAccess{}:
-      ["--disable-sandbox"]
-    case _:
-      Nil{}
-
-def Muse.args(r: M.RuntimeMode, +model: String) -> List<&2, String>:
-  List.concat(&2, String, [["serve"], Codex.opt("--model", model), ["--trust-workspace"], Muse.free(r)])
+# skills load (as Codex and Grok read AGENTS.md). The approval mode goes over
+# the wire (Muse.mode).
+def Muse.args(+model: String) -> List<&2, String>:
+  List.concat(&2, String, [["serve"], Codex.opt("--model", model), ["--trust-workspace"]])
 
 def Muse.mode(r: M.RuntimeMode) -> String:
   match r:
@@ -2699,8 +2680,6 @@ def Muse.mode(r: M.RuntimeMode) -> String:
       MS.Msp.mode.k(1n)
     case M.AutoMode{}:
       MS.Msp.mode.k(2n)
-    case M.FullAccess{}:
-      MS.Msp.mode.k(3n)
 
 def Grok.report(ls: List<&2, String>, +thread: String, +inbox: Chan(Msg)) -> IO(Unit):
   match ls:
@@ -4108,7 +4087,7 @@ def Grok.go(+cfg: Cfg, +st: M.State, +thread: String, +cwd: String, +model: Stri
     +ss : List<&2, AG.USkill> <- Skills.scan(cwd)
     +keys : String <- AKS.Ak.prompt(Cfg.home(cfg))
     Grok.run(Grok.args(r, model, Hub.effort_of(st, thread)),
-      MS.PAcp{AC.AcpTurn{cwd, Hub.mcp_url.g(cfg, thread, gen), Hub.prompt(cfg, st, thread, cwd, fs, keys) ++ AG.USkill.prompt(ss), AG.Mention.expand("grok", text, ss), session, Grok.asks(r)}}, cwd, thread, gen, inbox)
+      MS.PAcp{AC.AcpTurn{cwd, Hub.mcp_url.g(cfg, thread, gen), Hub.prompt(cfg, st, thread, cwd, fs, keys) ++ AG.USkill.prompt(ss), AG.Mention.expand("grok", text, ss), session, True{}}}, cwd, thread, gen, inbox)
 
 # one Muse turn: Grok's runner over MSP; the turn's gen makes its command
 # ids (Muse refuses one it has seen)
@@ -4117,7 +4096,7 @@ def Muse.go(+cfg: Cfg, +st: M.State, +thread: String, +cwd: String, +model: Stri
     +fs : K.Files <- Files.prepared(thread, cwd, inbox)
     +ss : List<&2, AG.USkill> <- Skills.scan(cwd)
     +keys : String <- AKS.Ak.prompt(Cfg.home(cfg))
-    Grok.run(Muse.args(r, model),
+    Grok.run(Muse.args(model),
       MS.PMsp{MS.MspTurn{cwd, Hub.mcp_url.g(cfg, thread, gen), Hub.prompt(cfg, st, thread, cwd, fs, keys) ++ AG.USkill.prompt(ss), AG.Mention.expand("muse", text, ss), session,
         Muse.mode(r), AG.Effort.of("muse", Hub.effort_of(st, thread)), gen}}, cwd, thread, gen, inbox)
 
@@ -4132,8 +4111,6 @@ def Agt.mode(r: M.RuntimeMode) -> String:
       AGY.Agy.mode.k(1n)
     case M.AutoMode{}:
       AGY.Agy.mode.k(2n)
-    case M.FullAccess{}:
-      AGY.Agy.mode.k(3n)
 
 def Agt.args(+home: String, +st: M.State) -> List<&2, String>:
   AGY.Agy.args(AGX.Agx.root(home), AKS.Ak.path(home), M.Setting.get(st, "agy.auth", ""), M.Setting.get(st, "agy.account", ""),
@@ -4146,7 +4123,7 @@ def Agt.go(+cfg: Cfg, +st: M.State, +thread: String, +cwd: String, +model: Strin
     +keys : String <- AKS.Ak.prompt(Cfg.home(cfg))
     w : Bool <- AGX.Agx.write(AGX.Agx.root(Cfg.home(cfg)))
     Grok.run(Agt.args(Cfg.home(cfg), st),
-      MS.PAgy{AGY.AgyTurn{AC.AcpTurn{cwd, Hub.mcp_url.g(cfg, thread, gen), Hub.prompt(cfg, st, thread, cwd, fs, keys) ++ AG.USkill.prompt(ss), AG.Mention.expand("antigravity", text, ss), session, Grok.asks(r)},
+      MS.PAgy{AGY.AgyTurn{AC.AcpTurn{cwd, Hub.mcp_url.g(cfg, thread, gen), Hub.prompt(cfg, st, thread, cwd, fs, keys) ++ AG.USkill.prompt(ss), AG.Mention.expand("antigravity", text, ss), session, True{}},
         AGY.Agy.method(M.Setting.get(st, "agy.auth", "")), Agt.mode(r), model}}, cwd, thread, gen, inbox)
 
 def Term.nums(bs: List<&2, U32>) -> List<&2, String>:

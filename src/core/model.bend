@@ -41,7 +41,6 @@ type RuntimeMode is Data:
   Supervised{}
   AcceptEdits{}
   AutoMode{}
-  FullAccess{}
 
 type InteractionMode is Data:
   DefaultMode{}
@@ -452,7 +451,7 @@ def Shelf.of(t: Thread) -> Shelf:
   Shelf.of.k(deleted, archived, pinned, override, Nat.is_gt(settled_at, unsettled_at))
 
 def Thread.blank(id: String) -> Thread:
-  Thread{id, "", "", 0n, 0n, Idle{}, 0n, True{}, NoOverride{}, 0n, 0n, False{}, Local{}, "", "", "", "", FullAccess{}, DefaultMode{}, "", True{}}
+  Thread{id, "", "", 0n, 0n, Idle{}, 0n, True{}, NoOverride{}, 0n, 0n, False{}, Local{}, "", "", "", "", AutoMode{}, DefaultMode{}, "", True{}}
 
 def Project.blank(id: String) -> Project:
   Project{id, "", "", 0n, True{}}
@@ -1950,7 +1949,7 @@ def State.apply.go(s: State, e: Change) -> State:
     case ProjectRemoved{+id, _}:
       State.remove_project(s, id)
     case ThreadCreated{id, project, title, env, branch, worktree, provider, model, +at}:
-      State.put_thread(s, Thread{id, project, title, at, at, Idle{}, 0n, False{}, NoOverride{}, 0n, 0n, False{}, env, branch, worktree, provider, model, FullAccess{}, DefaultMode{}, "", False{}})
+      State.put_thread(s, Thread{id, project, title, at, at, Idle{}, 0n, False{}, NoOverride{}, 0n, 0n, False{}, env, branch, worktree, provider, model, AutoMode{}, DefaultMode{}, "", False{}})
     case ThreadRenamed{+id, +title, _}:
       State.thread((t => Thread.renamed(title, t)), s, id)
     case MessagePosted{+thread, msg, role, text, +at}:

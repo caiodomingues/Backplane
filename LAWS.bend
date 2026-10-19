@@ -4571,10 +4571,10 @@ law scratch_project_kept:
 
 # an idle scratch thread goes once its window has passed, not before
 law scratch_expires:
-  {M.Scratch.expired(1000n, 100n, M.Thread{"t", "scratch", "x", 0n, 900n, M.Idle{}, 0n, False{}, M.NoOverride{}, 0n, 0n, False{}, M.Local{}, "", "", "", "", M.FullAccess{}, M.DefaultMode{}, "", False{}}) == True{} : Bool}
+  {M.Scratch.expired(1000n, 100n, M.Thread{"t", "scratch", "x", 0n, 900n, M.Idle{}, 0n, False{}, M.NoOverride{}, 0n, 0n, False{}, M.Local{}, "", "", "", "", M.AutoMode{}, M.DefaultMode{}, "", False{}}) == True{} : Bool}
 
 law scratch_not_yet:
-  {M.Scratch.expired(999n, 100n, M.Thread{"t", "scratch", "x", 0n, 900n, M.Idle{}, 0n, False{}, M.NoOverride{}, 0n, 0n, False{}, M.Local{}, "", "", "", "", M.FullAccess{}, M.DefaultMode{}, "", False{}}) == False{} : Bool}
+  {M.Scratch.expired(999n, 100n, M.Thread{"t", "scratch", "x", 0n, 900n, M.Idle{}, 0n, False{}, M.NoOverride{}, 0n, 0n, False{}, M.Local{}, "", "", "", "", M.AutoMode{}, M.DefaultMode{}, "", False{}}) == False{} : Bool}
 
 # the window in days: seven unless set, at most ninety
 law scratch_days_default:
@@ -7356,6 +7356,18 @@ law codec_wake_roundtrip:
 
 law codec_wake_dropped_roundtrip:
   {C.Change.decode(C.Change.encode(M.WakeDropped{"w1", 9n})) == Some{M.WakeDropped{"w1", 9n}} : Maybe<&2, M.Change>}
+
+# no runtime skips approvals: "full-access" in old logs reads as auto, and
+# every runtime that exists reads back as itself
+law runtime_full_access_decodes_auto:
+  {C.Runtime.of("full-access") == M.AutoMode{} : M.RuntimeMode}
+
+law runtime_roundtrip:
+  for r: M.RuntimeMode
+  {C.Runtime.of(C.Runtime.name(r)) == r : M.RuntimeMode}
+
+law claude_auto_permission:
+  {PM.Claude.permission(M.AutoMode{}, M.DefaultMode{}) == "auto" : String}
 
 law wake_message_one_paragraph:
   {WAK.Wake.flat("one\ntwo\r\tthree", "") == "one two  three" : String}

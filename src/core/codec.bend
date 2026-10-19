@@ -107,8 +107,6 @@ def Runtime.name(r: M.RuntimeMode) -> String:
       "auto-accept-edits"
     case M.AutoMode{}:
       "auto"
-    case M.FullAccess{}:
-      "full-access"
 
 def Runtime.of.k(i: Nat) -> M.RuntimeMode:
   match i:
@@ -116,13 +114,12 @@ def Runtime.of.k(i: Nat) -> M.RuntimeMode:
       M.Supervised{}
     case 1n:
       M.AcceptEdits{}
-    case 2n:
-      M.AutoMode{}
     case _:
-      M.FullAccess{}
+      M.AutoMode{}
 
+# "full-access" in old logs decodes as auto: no runtime skips approvals
 def Runtime.of(+s: String) -> M.RuntimeMode:
-  Runtime.of.k(Codec.pos(["approval-required", "auto-accept-edits", "auto", "full-access"], s))
+  Runtime.of.k(Codec.pos(["approval-required", "auto-accept-edits"], s))
 
 def Interaction.name(i: M.InteractionMode) -> String:
   match i:

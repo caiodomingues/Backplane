@@ -261,8 +261,6 @@ def Claude.permission(r: M.RuntimeMode, i: M.InteractionMode) -> String:
       "acceptEdits"
     case M.AutoMode{} M.DefaultMode{}:
       "auto"
-    case M.FullAccess{} M.DefaultMode{}:
-      "bypassPermissions"
 
 def Claude.opt.k(empty: Bool, flag: String, v: String, rest: List<&2, String>) -> List<&2, String>:
   match empty:
@@ -290,18 +288,10 @@ def Claude.plugins(ds: List<&2, String>) -> List<&2, String>:
     case d <> t:
       "--plugin-dir" <> d <> Claude.plugins(t)
 
-# `claude` flags for a long-lived stream-json session
-# outside full access, Claude asks Backplane (the user) before a tool runs
-def Claude.ask(r: M.RuntimeMode, i: M.InteractionMode, rest: List<&2, String>) -> List<&2, String>:
-  match r i:
-    case M.FullAccess{} M.DefaultMode{}:
-      rest
-    case _ _:
-      List.append(&2, String, ["--permission-prompt-tool", "mcp__backplane__permission_prompt"], rest)
-
+# `claude` flags for a long-lived stream-json session; Claude asks Backplane
+# (the user) before a tool runs
 def Claude.args(+model: String, +session: String, +r: M.RuntimeMode, +i: M.InteractionMode, prompt: String, +dirs: List<&2, String>) -> List<&2, String>:
   List.append(&2, String, ["-p", "--verbose", "--input-format", "stream-json", "--output-format", "stream-json",
     "--include-partial-messages", "--permission-mode", Claude.permission(r, i),
-    "--append-system-prompt", prompt],
-    Claude.ask(r, i,
-    Claude.opt("--model", model, Claude.opt("--resume", session, Claude.dirs(dirs)))))
+    "--append-system-prompt", prompt, "--permission-prompt-tool", "mcp__backplane__permission_prompt"],
+    Claude.opt("--model", model, Claude.opt("--resume", session, Claude.dirs(dirs))))

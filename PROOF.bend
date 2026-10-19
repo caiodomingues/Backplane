@@ -8819,6 +8819,21 @@ def Laws.wake_pr_repeat_quiet():
 def Laws.codec_wake_roundtrip():
   {==}
 
+def Laws.runtime_full_access_decodes_auto():
+  {==}
+
+def Laws.runtime_roundtrip(r):
+  match r:
+    case M.Supervised{}:
+      {==}
+    case M.AcceptEdits{}:
+      {==}
+    case M.AutoMode{}:
+      {==}
+
+def Laws.claude_auto_permission():
+  {==}
+
 def Laws.codec_wake_dropped_roundtrip():
   {==}
 
