@@ -5,6 +5,7 @@ import ../core/kihealth.bend as KH
 import ../core/kserve.bend as KSC
 import ./kserve.bend as KSV
 import ../core/cef.bend as CF
+import ../core/gate.bend as GTE
 import ../core/exe.bend as EX
 import ./lockio.bend as LG
 import ../core/locks.bend as LCK
@@ -1314,11 +1315,12 @@ def Conn.file(+p: String) -> String:
 def Conn.cache(+path: String) -> String:
   Bool.pick(String, String.starts_with(path, "/chunk-"), "public, max-age=31536000, immutable", "no-cache")
 
-# a websocket from plain loopback is trusted; anything else (the tailnet
-# listener, or `tailscale serve` proxying with its identity headers) must
-# carry ?token=<the pairing token>
+# a request on plain loopback is trusted unless another site's page could
+# have sent it (core/gate.bend); anything else (the tailnet listener, or
+# `tailscale serve` proxying with its identity headers) must carry
+# ?token=<the pairing token>
 def Conn.allowed(+trusted: Bool, +hs: List<&2, W.Header>, +path: String, +token: String) -> Bool:
-  Bool.or(Bool.and(trusted, String.is_empty(W.Http.header_of(hs, "tailscale-user-login"))),
+  Bool.or(Bool.and(trusted, Bool.and(String.is_empty(W.Http.header_of(hs, "tailscale-user-login")), GTE.Gate.local(W.Http.header_of(hs, "host"), W.Http.header_of(hs, "origin")))),
     Bool.and(Bool.not(String.is_empty(token)), Bool.or(String.contains(path, "token=" ++ token), String.contains(W.Http.header_of(hs, "cookie"), "bp_token=" ++ token))))
 
 # a websocket from this machine's loopback, not proxied by tailscale serve,
