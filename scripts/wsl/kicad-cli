@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+# kicad-cli for a hub in WSL that drives KiCad installed on Windows.
+set -o pipefail
+
+exe=${BACKPLANE_WIN_KICAD_CLI:-}
+if [ -z "$exe" ]; then
+  for f in /mnt/*/Program*/KiCad/*/bin/kicad-cli.exe; do
+    [ -f "$f" ] && { exe=$f; break; }
+  done
+fi
+if [ -z "$exe" ] || [ ! -f "$exe" ]; then
+  echo "kicad-cli: no Windows kicad-cli.exe found (set BACKPLANE_WIN_KICAD_CLI)" >&2
+  exit 127
+fi
+
+win() { wslpath -w "$1" 2>/dev/null || printf '%s' "$1"; }
+
+args=()
+for a in "$@"; do
+  case $a in
+    /*) args+=("$(win "$a")") ;;
+    --*=/*) args+=("${a%%=*}=$(win "${a#*=}")") ;;
+    *) args+=("$a") ;;
+  esac
+done
+
+{ "$exe" "${args[@]}" 2>&1 >&3 3>&- | tr -d '\r' >&2 3>&-; } 3>&1 | tr -d '\r'
